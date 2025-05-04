@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SMART PAY</title>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #121212;
+            --fg: #00ff00;
+            --accent: #0f0;
+            --input-bg: #1e1e1e;
+            --input-fg: #0f0;
+        }
+
+        .light {
+            --bg: #f5f5f5;
+            --fg: #333;
+            --accent: #0066cc;
+            --input-bg: #fff;
+            --input-fg: #333;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'Courier New', monospace;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .screen {
+            width: 100%;
+            max-width: 1000px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* LOGIN */
+
+        #login-screen {
+            padding: 30px;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+        }
+
+        #login-screen h2 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #login-screen input,
+        #login-screen button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            background: var(--input-bg);
+            color: var(--input-fg);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        #login-screen button {
+            background: var(--accent);
+            cursor: pointer;
+        }
+
+        .error {
+            color: #f00;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        /* DASHBOARD */
+
+        #dashboard-screen header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #dashboard-screen header h1 {
+            font-size: 2rem;
+        }
+
+        #dashboard-screen header button {
+            background: none;
+            border: none;
+            color: var(--fg);
+            cursor: pointer;
+            font-size: 1.4rem;
+            margin-left: 15px;
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        /* Resumo */
+
+        .summary {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: var(--input-bg);
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .card h3 {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .card p {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        /* Saques */
+
+        .launch-product form {
+            display: grid;
+            gap: 10px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+
+        .launch-product input,
+        .launch-product select,
+        .launch-product textarea,
+        .launch-product button {
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid var(--accent);
+            background: var(--input-bg);
+            color: var(--input-fg);
+            font-size: 1rem;
+        }
+
+        .launch-product textarea {
+            resize: vertical;
+            min-height: 80px;
+            grid-column: span 2;
+        }
+
+        .launch-product button {
+            background: var(--accent);
+            color: var(--bg);
+            cursor: pointer;
+            font-weight: bold;
+            grid-column: span 2;
+        }
+
+        /* Tabela */
+
+        .products-list {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid var(--accent);
+            padding: 10px;
+            text-align: left;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+
+        th {
+            background: var(--input-bg);
+        }
+
+        a.link {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a.link:hover {
+            text-decoration: underline;
+        }
+
+        /* Detalhes da operação */
+
+        .product-details {
+            background: var(--input-bg);
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .product-details p {
+            margin: 8px 0;
+        }
+
+        .product-details.hidden {
+            display: none;
+        }
+
+        /* Gráfico */
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+            background: var(--input-bg);
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        /* Logs */
+
+        .logs {
+            background: var(--input-bg);
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+
+        /* Responsivo */
+
+        @media (max-width: 700px) {
+            main {
+                gap: 20px;
+            }
+            .launch-product textarea {
+                grid-column: span 1;
+            }
+            .launch-product button {
+                grid-column: span 1;
+            }
+            .summary {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- LOGIN -->
+    <div id="login-screen" class="screen">
+        <h2><i class="fas fa-user-lock"></i> Login</h2>
+        <form id="login-form">
+            <input type="email" id="login-email" placeholder="Email" required />
+            <input type="password" id="login-password" placeholder="Senha" required />
+            <button type="submit" style="color:#000;"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+            <p id="login-error" class="error"></p>
+        </form>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard-screen" class="screen hidden">
+        <header>
+            <h1><i class="fa-brands fa-stackpath"></i> SMART PAY </h1>
+            <div>
+                <button id="theme-toggle"><i class="fas fa-moon"></i></button>
+                <button id="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
+            </div>
+        </header>
+        <main>
+            <!-- Resumo geral -->
+            <section class="summary">
+                <div class="card">
+                    <h3><i class="fa-solid fa-credit-card"></i></i> Cartão</h3>
+                    <p id="total-products">0</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fa-solid fa-sack-dollar"></i></i> Saques</h3>
+                    <p id="total-sales">0</p>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-dollar-sign"></i> Faturamento</h3>
+                    <p id="total-revenue">R$ 0,00</p>
+                </div>
+            </section>
+
+            <!-- Sacar cartão -->
+            <section class="launch-product">
+                <h2><i class="fa-solid fa-sack-dollar"></i></i> Sacar</h2>
+                <form id="product-form">
+                    <input type="text" id="product-name" placeholder="Seu Nome" required />
+                    <input type="text" id="product-link" placeholder="CHAVE PIX" required />
+                    <input type="number" id="product-price" placeholder="Valor(R$)" min="0" step="0.01" required />
+                    <select id="product-category" required>
+                        <option value="" disabled selected>Tipo</option>
+                        <option>Lara 1</option>
+                        <option>Lara 2</option>
+                        <option>Lara 3</option>
+                        <option>Virada De Saldo</option>
+                        <option>Outros</option>
+                    </select>
+                    <textarea id="product-description" placeholder="Info" required></textarea>
+                    <input type="number" id="product-stock" placeholder="Info" min="0" required />
+                    <button type="submit"><i class="fas fa-rocket"></i> Sacar</button>
+                </form>
+            </section>
+
+            <!-- Lista de Histórico -->
+            <section class="products-list">
+                <h2><i class="fas fa-list"></i> Histórico</h2>
+                <table id="products-table">
+                    <thead>
+                        <tr>
+                            <th>Ativo</th>
+                            <th>Nome</th>
+                            <th>Preço</th>
+                            <th>Saques</th>
+                            <th>Faturamento</th>
+                            <th>Chave Pix</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </section>
+
+            <!-- Detalhes do cartão -->
+            <section id="product-details" class="product-details hidden">
+                <h2><i class="fas fa-info-circle"></i> Detalhes do cartão</h2>
+                <div id="details-content"></div>
+            </section>
+
+            <!-- Gráfico -->
+            <section class="charts">
+                <h2><i class="fas fa-chart-line"></i> Gráfico de Saques</h2>
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Logs -->
+            <section class="logs">
+                <h2><i class="fas fa-terminal"></i> Logs</h2>
+                <div id="log-console"></div>
+            </section>
+        </main>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // —— CONFIG —— 
+            const USER_EMAIL = 'admin@drankpanel.com';
+            const USER_PASS = 'Drank123';
+            const ACCENT = '#0f0';
+            const INACTIVE = '#555';
+
+            // —— HELPERS —— 
+            function fmtBRL(v) {
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL'
+                }).format(v);
+            }
+
+            function timestamp() {
+                return new Date().toLocaleTimeString();
+            }
+
+            function addLog(msg) {
+                const lc = document.getElementById('log-console');
+                const entry = document.createElement('div');
+                entry.textContent = `[${timestamp()}] ${msg}`;
+                lc.appendChild(entry);
+                lc.scrollTop = lc.scrollHeight;
+            }
+
+            function saveState() {
+                localStorage.setItem('products', JSON.stringify(products));
+            }
+
+            function loadState() {
+                const stored = localStorage.getItem('products');
+                products = stored ? JSON.parse(stored) : [];
+                products.forEach(p => {
+                    if (p.active === undefined) p.active = true;
+                });
+            }
+
+            // —— DADOS —— 
+            let products = [];
+
+            // —— ELEMENTOS —— 
+            const loginScreen = document.getElementById('login-screen');
+            const dashboardScreen = document.getElementById('dashboard-screen');
+            const loginForm = document.getElementById('login-form');
+            const loginError = document.getElementById('login-error');
+            const logoutBtn = document.getElementById('logout-btn');
+            const themeToggle = document.getElementById('theme-toggle');
+            const productForm = document.getElementById('product-form');
+            const tableBody = document.querySelector('#products-table tbody');
+            const totalProdEl = document.getElementById('total-products');
+            const totalSalesEl = document.getElementById('total-sales');
+            const totalRevEl = document.getElementById('total-revenue');
+            const detailsSec = document.getElementById('product-details');
+            const detailsCont = document.getElementById('details-content');
+            const ctx = document.getElementById('salesChart').getContext('2d');
+
+            // —— CHART.JS —— 
+            const salesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Saques',
+                        data: [],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // —— RENDER FUNCS —— 
+            function renderSummary() {
+                const totalProducts = products.length;
+                const totalSales = products.reduce((sum, p) => sum + p.sales, 0);
+                const totalRevenue = products.reduce((sum, p) => sum + p.sales * p.price, 0);
+                totalProdEl.textContent = totalProducts;
+                totalSalesEl.textContent = totalSales;
+                totalRevEl.textContent = fmtBRL(totalRevenue);
+            }
+
+            function renderTable() {
+                tableBody.innerHTML = '';
+                products.forEach((p, i) => {
+                    const rev = p.price * p.sales;
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+            <td>
+              <button class="toggle-active" data-index="${i}"
+                      style="background:none;border:none;color:${p.active?ACCENT:INACTIVE};font-size:1.2rem;">
+                <i class="fas fa-toggle-${p.active?'on':'off'}"></i>
+              </button>
+            </td>
+            <td>${p.name}</td>
+            <td>${fmtBRL(p.price)}</td>
+            <td>${p.sales}</td>
+            <td>${fmtBRL(rev)}</td>
+            <td><a class="link" href="${p.link}" target="_blank"><i class="fas fa-external-link-alt"></i></a></td>
+          `;
+                    tableBody.appendChild(tr);
+                });
+                document.querySelectorAll('.toggle-active').forEach(btn => {
+                    btn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        const idx = +btn.dataset.index;
+                        toggleActive(idx, btn);
+                    });
+                });
+                renderSummary();
+            }
+
+            function updateChart() {
+                salesChart.data.labels = products.map(p => p.name);
+                salesChart.data.datasets[0].data = products.map(p => p.sales);
+                salesChart.update();
+            }
+
+            function showDetails(i) {
+                const p = products[i],
+                    rev = p.price * p.sales;
+                detailsCont.innerHTML = `
+          <p><strong>Nome:</strong> ${p.name}</p>
+          <p><strong>Ativo:</strong> ${p.active?'Sim':'Não'}</p>
+          <p><strong>Cartão:</strong> ${p.category}</p>
+          <p><strong>Descrição:</strong> ${p.description}</p>
+          <p><strong>Preço:</strong> ${fmtBRL(p.price)}</p>
+          <p><strong>Link:</strong> <a class="link" href="${p.link}" target="_blank">${p.link}</a></p>
+          <p><strong>Numero de parcelas do Sacar :</strong> ${p.stock}</p>
+          <p><strong>Saques:</strong> ${p.sales}</p>
+          <p><strong>Faturamento:</strong> ${fmtBRL(rev)}</p>
+        `;
+                detailsSec.classList.remove('hidden');
+                addLog(`ℹ Detalhes de "${p.name}" exibidos.`);
+            }
+
+            function toggleActive(i, btn) {
+                const p = products[i];
+                p.active = !p.active;
+                saveState();
+                const icon = btn.querySelector('i');
+                icon.className = `fas fa-toggle-${p.active?'on':'off'}`;
+                btn.style.color = p.active ? ACCENT : INACTIVE;
+                addLog(`🔄 "${p.name}" ${p.active?'ativado':'desativado'}.`);
+            }
+
+            // —— SIMULAÇÃO —— 
+            function executeSimulation() {
+                // Verifica se há produtos ativos
+                const activeProducts = products.filter(p => p.active);
+                if (activeProducts.length === 0) {
+                    addLog('⚠ Nenhum produto ativo para simular saques.');
+                    return;
+                }
+
+                // Gera saques aleatórios para produtos ativos
+                activeProducts.forEach(p => {
+                    const v = Math.floor(Math.random() * 0) + 1; // Entre 1 e 1 saques
+                    p.sales += v;
+                    addLog(`💰 "${p.name}" +${v} Saques realizados.`);
+                });
+
+                // Atualiza a interface
+                renderTable();
+                updateChart();
+                saveState();
+                
+                // Mostra mensagem de conclusão
+                addLog('✅ Simulação de saques concluída.');
+            }
+
+            // —— LOGIN / LOGOUT —— 
+            function showDashboard() {
+                loginScreen.classList.add('hidden');
+                dashboardScreen.classList.remove('hidden');
+                loadState();
+                renderTable();
+                updateChart();
+                addLog('✅ Painel carregado com sucesso.');
+            }
+
+            if (localStorage.getItem('isLoggedIn') === 'true') showDashboard();
+
+            loginForm.addEventListener('submit', e => {
+                e.preventDefault();
+                loginScreen.classList.add('hidden');
+                dashboardScreen.classList.remove('hidden');
+                addLog('✅ Login realizado com sucesso.');
+                loadState();
+                renderTable();
+                updateChart();
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('isLoggedIn');
+                loginScreen.classList.remove('hidden');
+                dashboardScreen.classList.add('hidden');
+                loginForm.reset();
+                loginError.textContent = '';
+                addLog('🔒 Sessão encerrada.');
+            });
+
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('light');
+                themeToggle.querySelector('i').className =
+                    document.body.classList.contains('light') ? 'fas fa-sun' : 'fas fa-moon';
+                addLog('🌗 Tema alternado.');
+            });
+
+            productForm.addEventListener('submit', e => {
+                e.preventDefault();
+                
+                // Coleta os dados do formulário
+                const name = document.getElementById('product-name').value.trim();
+                const link = document.getElementById('product-link').value.trim();
+                const price = parseFloat(document.getElementById('product-price').value);
+                const category = document.getElementById('product-category').value;
+                const description = document.getElementById('product-description').value.trim();
+                const stock = parseInt(document.getElementById('product-stock').value, 10);
+                
+                // Validação dos campos
+                if (!name || !link || isNaN(price) || !category || !description || isNaN(stock)) {
+                    alert('Por favor, preencha todos os campos corretamente!');
+                    addLog('❌ Falha ao cadastrar - Campos inválidos.');
+                    return;
+                }
+                
+                // Adiciona o novo produto
+                const newProduct = {
+                    name,
+                    link,
+                    price,
+                    category,
+                    description,
+                    stock,
+                    sales: 0,
+                    active: true
+                };
+                
+                products.push(newProduct);
+                saveState();
+                renderTable();
+                updateChart();
+                addLog(`✅ Novo cadastro: "${name}" - ${category}.`);
+                productForm.reset();
+                
+                // Executa a simulação de saques imediatamente após cadastrar
+                executeSimulation();
+            });
+
+            // Adiciona evento de clique nas linhas da tabela para mostrar detalhes
+            tableBody.addEventListener('click', (e) => {
+                const row = e.target.closest('tr');
+                if (row) {
+                    const index = Array.from(tableBody.children).indexOf(row);
+                    showDetails(index);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
